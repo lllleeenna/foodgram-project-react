@@ -30,12 +30,12 @@ class RecipeAdmin(admin.ModelAdmin):
 
 class RecipeTagAdmin(admin.ModelAdmin):
     """Класс для связи рецепта и тегов в админ-панели."""
-    list_display = ('tag', 'recipe',)
+    list_display = ('recipe', 'tag',)
 
 
 class RecipeIngredientAdmin(admin.ModelAdmin):
     """Класс для связи рецепта и ингредиентов в админ-панели."""
-    list_display = ('ingredient', 'recipe',)
+    list_display = ('recipe', 'ingredient',)
 
 
 class FollowAdmin(admin.ModelAdmin):

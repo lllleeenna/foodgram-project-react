@@ -1,5 +1,6 @@
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models import UniqueConstraint
 
 from users.models import User
 from recipes.validators import validate_amount
@@ -52,7 +53,6 @@ class Ingredient(models.Model):
 
     def __str__(self):
         return self.name
-
 
 
 class Recipe(models.Model):
@@ -113,7 +113,10 @@ class RecipeTag(models.Model):
     class Meta:
         verbose_name = 'Рецепт - Тег'
         verbose_name_plural = 'Рецепты - Теги'
-        ordering = ['tag']
+        ordering = ['recipe']
+        constraints = [
+            UniqueConstraint(fields=['recipe', 'tag'], name='unique_recipe_tag')
+        ]
 
     def __str__(self):
         return f'{self.recipe.name} - {self.tag.name}'
@@ -126,11 +129,13 @@ class RecipeIngredient(models.Model):
         Recipe,
         on_delete=models.CASCADE,
         verbose_name='Рецепт',
+        related_name='recipeingredients',
     )
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.PROTECT,
         verbose_name='Ингридиенты',
+        related_name='recipeingredients',
     )
     amount = models.IntegerField(
         validators=[validate_amount],
@@ -140,7 +145,12 @@ class RecipeIngredient(models.Model):
     class Meta:
         verbose_name = 'Рецепт - Ингредиент'
         verbose_name_plural = 'Рецепты - Ингредиенты'
-        ordering = ['ingredient']
+        ordering = ['recipe']
+        constraints = [
+            UniqueConstraint(
+                fields=['recipe', 'ingredient'], name='unique_recipe_ingredient'
+            )
+        ]
 
     def __str__(self):
         return f'{self.recipe.name} - {self.ingredient.name}'
@@ -166,6 +176,9 @@ class Follow(models.Model):
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
         ordering = ['user']
+        constraints = [
+            UniqueConstraint(fields=['user', 'author'], name='unique_follow')
+        ]
 
 
 class ShoppingCart(models.Model):
@@ -188,6 +201,11 @@ class ShoppingCart(models.Model):
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
         ordering = ['user']
+        constraints = [
+            UniqueConstraint(
+                fields=['user', 'recipe'], name='unique_shopingcart'
+            )
+        ]
 
 
 class Favorite(models.Model):
@@ -210,3 +228,8 @@ class Favorite(models.Model):
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранное'
         ordering = ['user']
+        constraints = [
+            UniqueConstraint(
+                fields=['user', 'recipe'], name='unique_favorite'
+            )
+        ]
