@@ -4,11 +4,13 @@ from django.core.files import File
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
 from rest_framework import viewsets, status
-from rest_framework.authtoken.models import Token
-from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.permissions import (
+    IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny,
+)
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from .permissions import IsAuthorOrReadOnlyPermission, IsAdminOrReadOnly
 from .serializers import (
     TagSerializer, RecipeSerializer, IngredientSerializer,
     RecipeShortSerializer, CustomUserSerializer, FollowUserSerializer
@@ -57,8 +59,14 @@ class CustomUserViewSet(UserViewSet):
     """
     queryset = User.objects.all()
     serializer_class = CustomUserSerializer
+    permission_classes = (IsAdminOrReadOnly,)
 
-    @action(url_path='subscriptions', methods=['get'], detail=False)
+    @action(
+        url_path='subscriptions',
+        methods=['get'],
+        detail=False,
+        permission_classes=(IsAuthenticated,)
+    )
     def get_subscriptions(self, response):
         """Подписки пользователя."""
         follow = User.objects.filter(author__user=response.user)
@@ -69,7 +77,12 @@ class CustomUserViewSet(UserViewSet):
         serializer = FollowUserSerializer(follow, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(url_path='subscribe', methods=['post', 'delete'], detail=True)
+    @action(
+        url_path='subscribe',
+        methods=['post', 'delete'],
+        detail=True,
+        permission_classes=(IsAuthenticated,)
+    )
     def get_subscribe(self, request, id):
         """Подписаться на автора, удалить подписку."""
         attrs = {
@@ -95,6 +108,7 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+    permission_classes = (AllowAny,)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -104,11 +118,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
+    permission_classes = (IsAuthorOrReadOnlyPermission,)
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    @action(url_path='download_shopping_cart', methods=['get'], detail=False)
+    @action(
+        url_path='download_shopping_cart',
+        methods=['get'],
+        detail=False,
+        permission_classes=(IsAuthenticated,)
+    )
     def get_download_shopping_cart(self, request):
         """Формирует и возвращает список ингредиентов, на основе рецептов,
         добавленных в список покупок.
@@ -147,7 +167,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 }
             )
 
-    @action(url_path='shopping_cart', methods=['post', 'delete'], detail=True)
+    @action(
+        url_path='shopping_cart',
+        methods=['post', 'delete'],
+        detail=True,
+        permission_classes=(IsAuthenticated,)
+    )
     def get_shopping_cart(self, request, pk):
         """Добавление и удаление рецепта из списка покупок пользователя."""
         attrs = {
@@ -162,7 +187,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    @action(url_path='favorite', methods=['post', 'delete'], detail=True)
+    @action(
+        url_path='favorite',
+        methods=['post', 'delete'],
+        detail=True,
+        permission_classes=(IsAuthenticated,)
+    )
     def get_favorite(self, request, pk):
         """Добавление и удаление рецептов из избранного."""
         attrs = {
