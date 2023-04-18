@@ -92,7 +92,7 @@ class Recipe(models.Model):
     class Meta:
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
-        ordering = ['name']
+        ordering = ['-id']
 
     def __str__(self):
         return self.name
@@ -137,7 +137,7 @@ class RecipeIngredient(models.Model):
         verbose_name='Ингридиенты',
         related_name='recipeingredients',
     )
-    amount = models.IntegerField(
+    amount = models.PositiveIntegerField(
         validators=[validate_amount],
         verbose_name='Количество',
     )
