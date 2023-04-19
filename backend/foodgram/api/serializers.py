@@ -2,14 +2,11 @@ import base64
 
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
-from djoser.serializers import UserSerializer, UserCreateSerializer
+from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
 
+from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
 from users.models import User
-from recipes.models import (
-    Tag, Recipe, Ingredient, RecipeIngredient, Follow, RecipeIngredient,
-    RecipeTag, ShoppingCart
-)
 
 
 class CustomUserSerializer(UserSerializer):
@@ -38,7 +35,6 @@ class CustomUserCreateSerializer(UserCreateSerializer):
     class Meta:
         model = User
         fields = ('email', 'username', 'first_name', 'last_name', 'password')
-
 
 
 class TagSerializer(serializers.ModelSerializer):

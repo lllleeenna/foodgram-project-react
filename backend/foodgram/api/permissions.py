@@ -21,7 +21,6 @@ class IsAdminOrReadOnly(permissions.BasePermission):
     """Авторизованные пользователи могут смотреть страницы пользователей
     """
     def has_permission(self, request, view):
-        print('IsAdminOrReadOnly')
         return (
             request.method in permissions.SAFE_METHODS
             or (
@@ -29,4 +28,3 @@ class IsAdminOrReadOnly(permissions.BasePermission):
                     and request.user.is_staff or request.user.is_superuser
             )
         )
-

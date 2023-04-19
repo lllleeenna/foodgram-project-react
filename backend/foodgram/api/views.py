@@ -1,24 +1,26 @@
-from django.db.models import Sum, Count
-from django.http import HttpResponse
+import os.path
+
 from django.core.files import File
+from django.db.models import Sum
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from rest_framework import viewsets, status
-from rest_framework.permissions import (
-    IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny,
-)
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from .permissions import IsAuthorOrReadOnlyPermission, IsAdminOrReadOnly
-from .serializers import (
-    TagSerializer, RecipeSerializer, IngredientSerializer,
-    RecipeShortSerializer, CustomUserSerializer, FollowUserSerializer
-)
+from foodgram.settings import MEDIA_ROOT
+from recipes.models import (Favorite, Follow, Ingredient, Recipe, ShoppingCart,
+                            Tag)
 from users.models import User
-from recipes.models import (
-    Tag, Recipe, Ingredient, ShoppingCart, Favorite, Follow,
-)
+from .filters import RecipeFilter
+from .paginations import PageNumberPaginationLimit
+from .permissions import IsAdminOrReadOnly, IsAuthorOrReadOnlyPermission
+from .serializers import (CustomUserSerializer, FollowUserSerializer,
+                          IngredientSerializer, RecipeSerializer,
+                          RecipeShortSerializer, TagSerializer)
 
 
 def create_obj(attrs, model, serializer):
@@ -31,7 +33,7 @@ def create_obj(attrs, model, serializer):
 
     if model.objects.filter(**attrs):
         return Response(
-            {'errors': f'Запись уже существует.'},
+            {'errors': 'Запись уже существует.'},
             status=status.HTTP_400_BAD_REQUEST
         )
     model.objects.create(**attrs)
@@ -45,7 +47,7 @@ def delete_obj(attrs, model):
     """Удаление записей из таблиц Favorite, Follow, ShoppingCart."""
     if not model.objects.filter(**attrs):
         return Response(
-            {'errors':  f'Запись отсутствует.'},
+            {'errors': 'Запись отсутствует.'},
             status=status.HTTP_400_BAD_REQUEST
         )
     model.objects.get(**attrs).delete()
@@ -70,10 +72,6 @@ class CustomUserViewSet(UserViewSet):
     def get_subscriptions(self, response):
         """Подписки пользователя."""
         follow = User.objects.filter(author__user=response.user)
-        page = self.paginate_queryset(follow)
-        # if page is not None:
-            # serializer = FollowUserSerializer(page, many=True)
-        # return self.get_paginated_response(serializer.data)
         serializer = FollowUserSerializer(follow, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -119,6 +117,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     permission_classes = (IsAuthorOrReadOnlyPermission,)
+    pagination_class = PageNumberPaginationLimit
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -163,7 +164,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_200_OK,
                 headers={
                     'Content - Type': 'text/html; charset=UTF-8',
-                    'Content-Disposition': 'attachment; filename="shoppingcart.txt"',
+                    'Content-Disposition': (
+                                               'attachment;'
+                                               'filename="shoppingcart.txt"',
+                    )
                 }
             )
 
@@ -206,6 +210,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return delete_obj(attrs, Favorite)
 
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def perform_destroy(self, instance):
+        image_path = os.path.join(MEDIA_ROOT, str(instance.image))
+        os.remove(image_path)
+        instance.delete()
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):

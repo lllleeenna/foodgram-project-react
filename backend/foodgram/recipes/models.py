@@ -113,9 +113,12 @@ class RecipeTag(models.Model):
     class Meta:
         verbose_name = 'Рецепт - Тег'
         verbose_name_plural = 'Рецепты - Теги'
-        ordering = ['recipe']
+        ordering = ['-id']
         constraints = [
-            UniqueConstraint(fields=['recipe', 'tag'], name='unique_recipe_tag')
+            UniqueConstraint(
+                fields=['recipe', 'tag'],
+                name='unique_recipe_tag',
+            )
         ]
 
     def __str__(self):
@@ -145,10 +148,11 @@ class RecipeIngredient(models.Model):
     class Meta:
         verbose_name = 'Рецепт - Ингредиент'
         verbose_name_plural = 'Рецепты - Ингредиенты'
-        ordering = ['recipe']
+        ordering = ['-id']
         constraints = [
             UniqueConstraint(
-                fields=['recipe', 'ingredient'], name='unique_recipe_ingredient'
+                fields=['recipe', 'ingredient'],
+                name='unique_recipe_ingredient',
             )
         ]
 
