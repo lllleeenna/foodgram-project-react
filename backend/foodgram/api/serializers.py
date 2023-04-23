@@ -26,7 +26,7 @@ class CustomUserSerializer(UserSerializer):
         user = self.context.get('request').user
         if user.is_anonymous:
             return False
-        return bool(user.follower.filter(author=obj.id))
+        return user.follower.filter(author=obj.id).exists()
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
@@ -107,14 +107,14 @@ class RecipeSerializer(serializers.ModelSerializer):
         user = self.context.get('request').user
         if user.is_anonymous:
             return False
-        return bool(user.favorites.filter(recipe=obj.id))
+        return Recipe.objects.filter(favorites__user=user, id=obj.id).exists()
 
     def get_is_in_shopping_cart(self, obj):
         """Вычисление значения поля is_in_shopping_cart."""
         user = self.context.get('request').user
         if user.is_anonymous:
             return False
-        return bool(user.shoppingcarts.filter(recipe=obj.id))
+        return user.shoppingcarts.filter(recipe=obj.id).exists()
 
     @staticmethod
     def create_ingredients(recipe, ingredients):
@@ -154,23 +154,27 @@ class RecipeSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'Список ингредиентов отсутствует.'
             )
-        print('ingredients = ', ingredients)
+
         if len(ingredients) == 0:
             raise serializers.ValidationError(
                 'Список ингредиентов пуст.'
             )
 
-        unique_ingredients = []
+        id_ingredients = [ingredient.get('id') for ingredient in ingredients]
+        if len(set(id_ingredients)) < len(id_ingredients):
+            raise serializers.ValidationError(
+                'Выбрано два одинаковых ингредиента.'
+            )
+
         for ingredient in ingredients:
-            if ingredient.get("id") in unique_ingredients:
+            if not isinstance(ingredients.get('amount'), int):
                 raise serializers.ValidationError(
-                    'Выбрано два одинаковых ингредиента.'
+                    'Количество ингредиентов должно быть числом.'
                 )
-            if ingredient.get('amount') <= 0:
+            if int(ingredient.get('amount')) <= 0:
                 raise serializers.ValidationError(
                     'Количество ингредиентов не может быть меньше/равно нулю.'
                 )
-            unique_ingredients.append(ingredient.get('id'))
 
         return ingredients
 
