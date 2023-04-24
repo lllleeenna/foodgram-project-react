@@ -23,4 +23,3 @@ class Command(BaseCommand):
                 record = dict(zip(fields, row))
                 m = Ingredient(**record)
                 m.save()
-

@@ -11,8 +11,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from foodgram.settings import MEDIA_ROOT
-from recipes.models import (Favorite, Follow, Ingredient, Recipe, ShoppingCart,
-                            Tag)
+from recipes.models import (
+    Favorite, Follow, Ingredient, Recipe, ShoppingCart, Tag)
 from users.models import User
 from .filters import RecipeFilter, IngredientSearchFilter
 from .paginations import PageNumberPaginationLimit
@@ -122,7 +122,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     """Получение списка рецептов, одного рецепта.
     Создание рецепта, обновление и удаление.
     """
-
     serializer_class = RecipeSerializer
     permission_classes = (IsAuthorOrReadOnlyPermission,)
     pagination_class = PageNumberPaginationLimit
@@ -131,12 +130,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = Recipe.objects.all()
         if self.request.query_params.get('is_favorited'):
-            queryset = Recipe.objects.filter(favorites__user=user)
+            return Recipe.objects.filter(favorites__user=user)
         if self.request.query_params.get('is_in_shopping_cart'):
-            queryset = Recipe.objects.filter(shoppingcarts__user=user)
-        return queryset
+            return Recipe.objects.filter(shoppingcarts__user=user)
+        return Recipe.objects.all()
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -179,7 +177,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             shopping_cart_list, content_type='text.txt; charset=utf-8'
         )
         response['Content-Disposition'] = (
-                'attachment; filename=shopping_cart_list.txt'
+            'attachment; filename=shopping_cart_list.txt'
         )
         return response
 
