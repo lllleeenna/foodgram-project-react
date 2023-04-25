@@ -84,7 +84,7 @@ DATABASES = {
         'ENGINE': os.getenv(
             'DB_ENGINE', default='django.db.backends.postgresql'
         ),
-        'NAME': os.getenv('DB_NAME', default='foodgram'),
+        'NAME': os.getenv('DB_NAME', default='foodgram2'),
         'USER': os.getenv('POSTGRES_USER', default='foodgram_user'),
         'PASSWORD': os.getenv('POSTGRES_PASSWORD', default='Ldbljeb'),
         'HOST': os.getenv('DB_HOST', default='127.0.0.1'),
@@ -137,8 +137,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static_backend')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-AUTH_USER_MODEL = 'users.User'
-
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
@@ -151,6 +149,8 @@ REST_FRAMEWORK = {
 
 
 DJOSER = {
+    'LOGIN_FIELD': 'email',
+    'HIDE_USER': False,
     'SERIALIZERS': {
         'user': 'api.serializers.CustomUserSerializer',
         'user_create': 'api.serializers.CustomUserCreateSerializer',

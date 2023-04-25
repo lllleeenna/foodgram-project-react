@@ -1,5 +1,6 @@
 import os.path
 
+from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -10,16 +11,17 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from foodgram.settings import MEDIA_ROOT
-from recipes.models import (
-    Favorite, Follow, Ingredient, Recipe, ShoppingCart, Tag)
-from users.models import User
-from .filters import RecipeFilter, IngredientSearchFilter
+from .filters import IngredientSearchFilter, RecipeFilter
 from .paginations import PageNumberPaginationLimit
 from .permissions import IsAdminOrReadOnly, IsAuthorOrReadOnlyPermission
 from .serializers import (CustomUserSerializer, FollowUserSerializer,
                           IngredientSerializer, RecipeSerializer,
                           RecipeShortSerializer, TagSerializer)
+from foodgram.settings import MEDIA_ROOT
+from recipes.models import (Favorite, Follow, Ingredient, Recipe, ShoppingCart,
+                            Tag)
+
+User = get_user_model()
 
 
 def create_obj(attrs, model, serializer):
@@ -122,6 +124,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     """Получение списка рецептов, одного рецепта.
     Создание рецепта, обновление и удаление.
     """
+
     serializer_class = RecipeSerializer
     permission_classes = (IsAuthorOrReadOnlyPermission,)
     pagination_class = PageNumberPaginationLimit

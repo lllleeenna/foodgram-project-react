@@ -1,12 +1,15 @@
 import base64
 
+from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
-from users.models import User
+
+User = get_user_model()
 
 
 class CustomUserSerializer(UserSerializer):
@@ -31,10 +34,25 @@ class CustomUserSerializer(UserSerializer):
 
 class CustomUserCreateSerializer(UserCreateSerializer):
     """Сериализатор модели User для создания пользователя."""
+    email = serializers.EmailField(
+        validators=[
+            UniqueValidator(
+                queryset=User.objects.all(),
+                message='Пользователь с таким email уже существует.'
+            )
+        ]
+    )
 
     class Meta:
         model = User
         fields = ('email', 'username', 'first_name', 'last_name', 'password')
+        extra_kwargs = {
+            'email': {'required': True},
+            'username': {'required': True},
+            'first_name': {'required': True},
+            'last_name': {'required': True},
+            'password': {'required': True},
+        }
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -167,9 +185,10 @@ class RecipeSerializer(serializers.ModelSerializer):
             )
 
         for ingredient in ingredients:
-            if not isinstance(ingredients.get('amount'), int):
+            amount = ingredient.get('amount')
+            if isinstance(amount, str) and not amount.isdigit():
                 raise serializers.ValidationError(
-                    'Количество ингредиентов должно быть числом.'
+                    'Количество ингредиентов должно быть положительным числом.'
                 )
             if int(ingredient.get('amount')) <= 0:
                 raise serializers.ValidationError(
