@@ -36,6 +36,7 @@ DB_PORT - 5432
 DB_NAME - имя БД
 POSTGRES_USER - пользователь БД
 POSTGRES_PASSWORD - пароль для БД
+SECRET_KEY - код для django
 ```
 После деплоя на сервере
 

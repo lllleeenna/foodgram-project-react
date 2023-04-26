@@ -1,12 +1,10 @@
-import base64
-
 from django.contrib.auth import get_user_model
-from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
+from .fields import Base64ImageField
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
 
 User = get_user_model()
@@ -87,19 +85,6 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit', 'amount',)
 
 
-class Base64ImageField(serializers.ImageField):
-    """Сериализация изображений."""
-
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
-            ext = format.split('/')[-1]
-
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-
-        return super().to_internal_value(data)
-
-
 class RecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для рецептов, с перечнем ингредиентов и тегов."""
 
@@ -137,15 +122,16 @@ class RecipeSerializer(serializers.ModelSerializer):
     @staticmethod
     def create_ingredients(recipe, ingredients):
         """Добавление ингредиентов в рецепт."""
-        for ingredient in ingredients:
-            RecipeIngredient.objects.create(
+        objs = (
+            RecipeIngredient(
                 recipe=recipe,
                 ingredient=get_object_or_404(
-                    Ingredient,
-                    id=ingredient.get('id')
+                    Ingredient, id=ingredient.get('id')
                 ),
                 amount=ingredient.get('amount')
-            )
+            ) for ingredient in ingredients
+        )
+        RecipeIngredient.objects.bulk_create(objs)
 
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
@@ -158,9 +144,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
-        for field, value in validated_data.items():
-            setattr(instance, field, value)
-        instance.save()
+        super().update(instance, validated_data)
         instance.tags.set(tags)
         RecipeIngredient.objects.filter(recipe=instance).delete()
         self.create_ingredients(instance, ingredients)
