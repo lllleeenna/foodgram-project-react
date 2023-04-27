@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
+from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.validators import UniqueValidator
 
 from .fields import Base64ImageField
@@ -86,7 +87,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    """Сериализатор для рецептов, с перечнем ингредиентов и тегов."""
+    """Сериализатор для просмотра рецептов, с перечнем ингредиентов и тегов."""
 
     author = CustomUserSerializer(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
@@ -119,6 +120,28 @@ class RecipeSerializer(serializers.ModelSerializer):
             return False
         return user.shoppingcarts.filter(recipe=obj.id).exists()
 
+
+class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = RecipeIngredient
+        fields = ('id', 'amount',)
+
+
+class RecipeCreateSerializer(serializers.ModelSerializer):
+    author = CustomUserSerializer(read_only=True)
+    tags = PrimaryKeyRelatedField(many=True, queryset=Tag.objects.all())
+    ingredients = RecipeIngredientCreateSerializer(many=True)
+    image = Base64ImageField()
+
+    class Meta:
+        model = Recipe
+        fields = (
+            'id', 'tags', 'author', 'ingredients',
+            'name', 'image', 'text', 'cooking_time',
+        )
+
     @staticmethod
     def create_ingredients(recipe, ingredients):
         """Добавление ингредиентов в рецепт."""
@@ -150,8 +173,13 @@ class RecipeSerializer(serializers.ModelSerializer):
         self.create_ingredients(instance, ingredients)
         return instance
 
-    def validate_ingredients(self):
-        ingredients = self.initial_data.get('ingredients')
+    def to_representation(self, instance):
+        return RecipeSerializer(
+            instance,
+            context={'request': self.context.get('request')}
+        ).data
+
+    def validate_ingredients(self, ingredients):
         if ingredients is None:
             raise serializers.ValidationError(
                 'Список ингредиентов отсутствует.'
@@ -181,8 +209,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         return ingredients
 
-    def validate_tags(self) -> list[Tag]:
-        tags = self.initial_data.get('tags')
+    def validate_tags(self, tags):
         if tags is None:
             raise serializers.ValidationError(
                 'Список тегов отсутствует.'
@@ -191,21 +218,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'Не выбрано ни одного тега.'
             )
-        unique_tags = []
-        for tag in tags:
-            tag_obj = get_object_or_404(Tag, id=tag)
-            if tag_obj in unique_tags:
-                raise serializers.ValidationError(
-                    'Выбрано два одинаковых тега.'
-                )
-            unique_tags.append(tag_obj)
-        return unique_tags
-
-    def validate(self, data):
-        data['ingredients'] = self.validate_ingredients()
-        data['tags'] = self.validate_tags()
-
-        return super().validate(data)
+        return tags
 
 
 class RecipeShortSerializer(serializers.ModelSerializer):

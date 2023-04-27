@@ -15,8 +15,9 @@ from .filters import IngredientSearchFilter, RecipeFilter
 from .paginations import PageNumberPaginationLimit
 from .permissions import IsAdminOrReadOnly, IsAuthorOrReadOnlyPermission
 from .serializers import (CustomUserSerializer, FollowUserSerializer,
-                          IngredientSerializer, RecipeSerializer,
-                          RecipeShortSerializer, TagSerializer)
+                          IngredientSerializer, RecipeCreateSerializer,
+                          RecipeSerializer, RecipeShortSerializer,
+                          TagSerializer)
 from .utils import create_obj, delete_obj
 from foodgram.settings import MEDIA_ROOT
 from recipes.models import (Favorite, Follow, Ingredient, Recipe, ShoppingCart,
@@ -95,7 +96,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     Создание рецепта, обновление и удаление.
     """
 
-    serializer_class = RecipeSerializer
     permission_classes = (IsAuthorOrReadOnlyPermission,)
     pagination_class = PageNumberPaginationLimit
     filter_backends = (DjangoFilterBackend,)
@@ -111,6 +111,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return RecipeSerializer
+        return RecipeCreateSerializer
 
     @action(
         url_path='download_shopping_cart',
