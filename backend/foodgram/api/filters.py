@@ -21,5 +21,6 @@ class RecipeFilter(django_filters.FilterSet):
         model = Recipe
         fields = ('author', 'tags')
 
+
 class IngredientSearchFilter(filters.SearchFilter):
     search_param = 'name'
