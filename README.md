@@ -1,5 +1,6 @@
 # Foodgram
 [![Github CI/CD](https://github.com/lllleeenna/foodgram-project-react/actions/workflows/foodgram_workflow/badge.svg)](https://github.com/lllleeenna/foodgram-project-react/actions)
+
 «Продуктовый помощник»: сайт, на котором пользователи будут публиковать 
 рецепты, добавлять чужие рецепты в избранное и подписываться на публикации 
 других авторов. 
