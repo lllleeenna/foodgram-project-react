@@ -1,5 +1,5 @@
 # Foodgram
-[![Github CI/CD](https://github.com/lllleeenna/foodgram-project-react/actions/workflows/foodgram_workflow.yml/badge.svg)](https://github.com/lllleeenna/foodgram-project-react/actions)
+[![Github CI/CD](https://github.com/lllleeenna/foodgram-project-react/actions/workflows/foodgram_workflow.yaml/badge.svg)](https://github.com/lllleeenna/foodgram-project-react/actions)
 
 ### Адрес
 http://51.250.90.189/
