@@ -134,3 +134,5 @@ dmypy.json
 
 media/
 static_backend/
+
+docker-compose_localhost.yml
