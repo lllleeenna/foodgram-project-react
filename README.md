@@ -1,17 +1,6 @@
 # Foodgram
 [![Github CI/CD](https://github.com/lllleeenna/foodgram-project-react/actions/workflows/foodgram_workflow.yaml/badge.svg)](https://github.com/lllleeenna/foodgram-project-react/actions)
 
-### Адрес
-http://51.250.90.189/
-
-http://51.250.90.189/admin/
-
-http://51.250.90.189/api/docs/
-
-Логин: admin
-
-Пароль: admin
-
 «Продуктовый помощник»: сайт, на котором пользователи будут публиковать 
 рецепты, добавлять чужие рецепты в избранное и подписываться на публикации 
 других авторов. 
